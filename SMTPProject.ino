@@ -7,6 +7,7 @@
 #include <esp_now.h>             
 #include <esp_arduino_version.h>  
 #include "config.h"
+#include <Wire.h>
 
 // Globale Objekte (in den anderen Tabs sichtbar)
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
@@ -20,13 +21,14 @@ int myAlarm = 0;   // wird in Stufe 5 vom Knopf gesetzt, vorerst 0
 
 void setup() {
   Serial.begin(115200);
-  pinMode(SWITCH_PIN, INPUT_PULLUP);     // NEU
+  pinMode(SWITCH_PIN, INPUT_PULLUP);
   SPI.begin(SPI_SCK, SPI_MISO, SPI_MOSI, TFT_CS);
+  Wire.begin(I2C_SDA, I2C_SCL);    
   displayBegin();
   gpsBegin();
   commsBegin();
+  compassBegin();                  
   displayWaiting();
-  Serial.println("Stufe 3 + switch started");
 }
 
 void loop() {

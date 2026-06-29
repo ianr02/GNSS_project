@@ -10,14 +10,18 @@ void gpsUpdate() {
     gps.encode(Serial1.read());
   }
 
-  // Fix nur akzeptieren, wenn Position GÜLTIG und FRISCH (< 2 s alt) ist.
-  // age() schützt davor, dass wir bei Signalverlust alte Geisterkoordinaten zeigen.
-  if (gps.location.isValid() && gps.location.age() < 2000) {
-    myFix.valid = true;
-    myFix.lat   = gps.location.lat();   // siehe Hinweis unten zur Umrechnung
-    myFix.lng   = gps.location.lng();
-    if (gps.speed.isValid())      myFix.speedKmh = gps.speed.kmph();
-    if (gps.satellites.isValid()) myFix.sats     = gps.satellites.value();
+  // NEU: Qualitätswerte holen (vor dem if, damit wir sie in der Bedingung nutzen können)
+  double hdop = gps.hdop.isValid()       ? gps.hdop.hdop()        : 99.0;  // 99 = unbekannt/schlecht
+  int    sats = gps.satellites.isValid() ? gps.satellites.value() : 0;
+
+  // Fix nur akzeptieren, wenn: gültig UND frisch (<2s) UND gute Qualität
+  if (gps.location.isValid() && gps.location.age() < 2000
+      && hdop < 5.0 && sats >= 5) {                 // NEU: hdop < 5.0 && sats >= 5
+    myFix.valid    = true;
+    myFix.lat      = gps.location.lat();
+    myFix.lng      = gps.location.lng();
+    myFix.sats     = sats;                           // nutzt jetzt die Variable von oben
+    if (gps.speed.isValid()) myFix.speedKmh = gps.speed.kmph();
   } else {
     myFix.valid = false;
   }

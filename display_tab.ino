@@ -14,6 +14,21 @@ void drawBorder(uint16_t color) {
     tft.drawRect(i, i, tft.width() - 2 * i, tft.height() - 2 * i, color);
 }
 
+// Zeichnet einen gefuellten Pfeil, der in Richtung angleDeg zeigt.
+// 0 = oben/Norden auf dem Bildschirm, im Uhrzeigersinn.
+void drawArrow(int cx, int cy, int r, float angleDeg, uint16_t color) {
+  float a = radians(angleDeg);
+  // Spitze
+  int tipX = cx + r * sin(a);
+  int tipY = cy - r * cos(a);
+  // zwei hintere Ecken (Pfeil-Fluegel)
+  int lX = cx + (r * 0.6) * sin(a + radians(150));
+  int lY = cy - (r * 0.6) * cos(a + radians(150));
+  int rX = cx + (r * 0.6) * sin(a - radians(150));
+  int rY = cy - (r * 0.6) * cos(a - radians(150));
+  tft.fillTriangle(tipX, tipY, lX, lY, rX, rY, color);
+}
+
 void displayWaiting() {
   tft.fillScreen(COL_BG);
   drawBorder(COL_WARN);
@@ -69,4 +84,19 @@ void displayPosition(const GpsFix &f) {
     tft.setCursor(8, 90);
     tft.print("Waiting for other device...");
   }
+    // ---- Kompass / Nordpfeil (rechts auf dem Display) ----
+  float heading = getHeading();
+  int cx = 195, cy = 60, r = 38;          // Kreis-Mittelpunkt rechts
+  tft.drawCircle(cx, cy, r, COL_TEXT);    // Kompass-Ring
+
+  // Der Pfeil zeigt nach NORDEN, relativ zur Blickrichtung:
+  // Pfeilwinkel = 0 (Nord) - Blickrichtung
+  drawArrow(cx, cy, r - 6, -heading, ST77XX_RED);
+
+  // "N" an die Stelle malen, wohin der Pfeil zeigt
+  float na = radians(-heading);
+  tft.setTextColor(COL_TEXT);
+  tft.setTextSize(1);
+  tft.setCursor(cx + (r + 4) * sin(na) - 3, cy - (r + 4) * cos(na) - 3);
+  tft.print("N");
 }

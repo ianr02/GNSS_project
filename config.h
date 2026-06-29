@@ -25,6 +25,10 @@
 #define GPS_TX   18        // ESP TX -> LC29H RX (Blau)
 #define GPS_BAUD 115200
 
+// ---- I2C (BMP280, QMI8658C, QMC5883L Magnetometer) ----
+#define I2C_SDA  42
+#define I2C_SCL  41
+
 // ---- Farben ----
 #define COL_BG    ST77XX_BLACK
 #define COL_OK    ST77XX_GREEN     // grüner Rand = Normalbetrieb
