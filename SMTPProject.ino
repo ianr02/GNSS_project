@@ -1,15 +1,6 @@
-#include <Arduino.h>
-#include <SPI.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_ST7789.h>
-#include <TinyGPSPlus.h>
-#include <WiFi.h>                
-#include <esp_now.h>             
-#include <esp_arduino_version.h>  
 #include "config.h"
-#include <Wire.h>
 
-// Globale Objekte (in den anderen Tabs sichtbar)
+unsigned long lastDraw = 0;
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 TinyGPSPlus     gps;
 GpsFix          myFix;
@@ -24,24 +15,27 @@ bool  normalActive   = false;              // sind wir gerade im Normal-Layout?
 float currentHeading = 0;                  // aktuelle Blickrichtung (Gyro)
 
 int myAlarm = 0;   // wird in Stufe 5 vom Knopf gesetzt, vorerst 0
+WiFiUDP         udp;
+int             myAlarm = 0; // Starts at 0 (Safe peacetime)
+PeerData peers[NUM_PEERS + 1];
 
 void setup() {
   Serial.begin(115200);
-  pinMode(SWITCH_PIN, INPUT_PULLUP);
+  pinMode(SWITCH_PIN, INPUT_PULLUP);     // NEW
   SPI.begin(SPI_SCK, SPI_MISO, SPI_MOSI, TFT_CS);
-  Wire.begin(I2C_SDA, I2C_SCL);    
   displayBegin();
   gpsBegin();
   commsBegin();
-  compassBegin();                  
+  compassBegin();
   displayWaiting();
+  Serial.println("Stage 3 + switch started");
 }
 
 void loop() {
   gpsUpdate();
 
-  // Schalterstellung = Alarmzustand. LOW = umgelegt (gegen GND) = Alarm.
-  myAlarm = (digitalRead(SWITCH_PIN) == LOW) ? 1 : 0;   // NEU
+  // Switch position = alarm state. LOW = flipped (to GND) = alarm.
+  myAlarm = (digitalRead(SWITCH_PIN) == LOW) ? 1 : 0;   // NEW
 
   commsUpdate();
 

@@ -1,11 +1,12 @@
-// ---- Geo-Berechnungen ----
+#include "config.h"
+// ---- Geo-calculations ----
 
 double toRad(double deg) { return deg * PI / 180.0; }
 double toDeg(double rad) { return rad * 180.0 / PI; }
 
-// Distanz zwischen zwei Punkten in Metern (Haversine)
+// Distance between two points in meters (Haversine)
 double haversine(double lat1, double lon1, double lat2, double lon2) {
-  const double R = 6371000.0;                 // Erdradius in m
+  const double R = 6371000.0;                 // Earth radius in m
   double dLat = toRad(lat2 - lat1);
   double dLon = toRad(lon2 - lon1);
   double a = sin(dLat/2) * sin(dLat/2) +
@@ -13,7 +14,7 @@ double haversine(double lat1, double lon1, double lat2, double lon2) {
   return R * 2 * atan2(sqrt(a), sqrt(1 - a));
 }
 
-// Peilung (Bearing) von Punkt 1 -> Punkt 2, in Grad gegen Norden (0..360)
+// Bearing from Point 1 -> Point 2, in degrees relative to North (0..360)
 double bearing(double lat1, double lon1, double lat2, double lon2) {
   double dLon = toRad(lon2 - lon1);
   double y = sin(dLon) * cos(toRad(lat2));
