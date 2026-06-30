@@ -15,12 +15,13 @@
 #define SSID "Campus Emergency"
 #define PASSWORD "A7654321"
 
-// ---- Alarm Toggle Switch ----
-#define SWITCH_PIN 1   // A free GPIO pin
-#define DRAW_INTERVAL 500 
+// ---- Alarm Toggle Switch (pin 12 = power/HIGH, pin 10 = sense) ----
+#define SWITCH_PWR_PIN 12   // driven HIGH, acts as the switch's supply
+#define SWITCH_PIN     10   // reads HIGH when the switch is closed
+#define DRAW_INTERVAL  500
 
 // ---- Device Identity: Change per device (1, 2, 3) ----
-#define DEVICE_ID 2
+#define DEVICE_ID 1
 #define NUM_PEERS 3
 
 // ---- ESP-NOW ----
@@ -40,6 +41,10 @@
 #define GPS_RX   17        // LC29H TX (Yellow) -> ESP RX
 #define GPS_TX   18        // ESP TX -> LC29H RX (Blue)
 #define GPS_BAUD 115200
+
+// ---- I2C (BMP280, QMI8658C, QMC5883L magnetometer) ----
+#define I2C_SDA  42
+#define I2C_SCL  41
 
 // ---- Colors ----
 #define COL_BG    ST77XX_BLACK

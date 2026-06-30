@@ -46,10 +46,25 @@ int firstActivePeer() {
 
 void commsBegin() {
   // Connect to Wifi
-  WiFi.mode(WIFI_AP_STA);
-  WiFi.begin(SSID, PASSWORD);
-  while (WiFi.status() != WL_CONNECTED) { delay(500); }
-  if (WiFi.status() == WL_CONNECTED) wifiConnected = true;
+WiFi.mode(WIFI_STA);
+  WiFi.setSleep(false);              // keep radio awake so ESP-NOW is reliable
+
+  if (strlen(SSID) > 0) {            // only try if an SSID is configured
+    WiFi.begin(SSID, PASSWORD);
+    unsigned long t0 = millis();
+    while (WiFi.status() != WL_CONNECTED && millis() - t0 < 8000) {
+      delay(250);                    // give up after 8 s -> setup never freezes
+    }
+    if (WiFi.status() == WL_CONNECTED) {
+      Serial.print("WiFi connected, IP: ");
+      Serial.println(WiFi.localIP());
+      udp.begin(PORT);
+      wifiConnected = true;
+    } else {
+      Serial.println("WiFi NOT connected (continuing, no PC link)");
+    }
+  }
+
 
   if (esp_now_init() != ESP_OK) { Serial.println("ESP-NOW init ERROR"); return; }
   esp_now_register_recv_cb(onDataRecv);
