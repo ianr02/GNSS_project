@@ -10,10 +10,10 @@ typedef struct message {
     float longitude;
 } message;
 
-/*
+
 message myLocationData = {"NODE_01", 37.7749, -122.4194}; 
 message incomingAlert;
-*/
+
 
 int firstActivePeer() {
   for (int i = 1; i <= NUM_PEERS; i++)

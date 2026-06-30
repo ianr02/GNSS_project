@@ -11,9 +11,9 @@
 
 // ---- Network Information ----
 #define PORT 5005
-#define BROADCAST "255.255.255.255"
-#define SSID ""
-#define PASSWORD ""
+#define BROADCAST "192.168.4.255"
+#define SSID "Campus Emergency"
+#define PASSWORD "A7654321"
 
 // ---- Alarm Toggle Switch ----
 #define SWITCH_PIN 1   // A free GPIO pin
