@@ -46,7 +46,7 @@ int firstActivePeer() {
 
 void commsBegin() {
   // Connect to Wifi
-WiFi.mode(WIFI_STA);
+  WiFi.mode(WIFI_STA);
   WiFi.setSleep(false);              // keep radio awake so ESP-NOW is reliable
 
   if (strlen(SSID) > 0) {            // only try if an SSID is configured
