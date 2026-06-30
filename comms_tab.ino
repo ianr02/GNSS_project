@@ -45,6 +45,7 @@ int firstActivePeer() {
 } 
 
 void commsBegin() {
+  /*
   // Connect to Wifi
 WiFi.mode(WIFI_STA);
   WiFi.setSleep(false);              // keep radio awake so ESP-NOW is reliable
@@ -74,35 +75,40 @@ WiFi.mode(WIFI_STA);
   peerInfo.channel = 0;
   peerInfo.encrypt = false;
   if (esp_now_add_peer(&peerInfo) != ESP_OK) Serial.println("Broadcast Peer ERROR");
-  Serial.println("ESP-NOW ready");
-  
-}
+  Serial.println("ESP-NOW ready");x
+  */
 
+  WiFi.mode(WIFI_STA);
+  WiFi.setSleep(false);          // keep radio awake (important!)
+  // --- WiFi connect block TEMPORARILY disabled for testing ---
+
+  if (esp_now_init() != ESP_OK) { Serial.println("ESP-NOW init failed"); return; }
+  esp_now_register_recv_cb(onDataRecv);
+
+  esp_now_peer_info_t peerInfo = {};
+  memcpy(peerInfo.peer_addr, broadcastAddr, 6);
+  peerInfo.channel = 0;
+  peerInfo.encrypt = false; 
+  esp_now_add_peer(&peerInfo);
+  Serial.println("ESP-NOW only");
+
+
+}
 void commsUpdate() {
-  if (myAlarm) {
-    if (millis() - lastTx >= 200) {
-      lastTx = millis();
-      char buf[64];
-      int n = snprintf(buf, sizeof(buf), "%d,%.6f,%.6f,%d",
-                      DEVICE_ID, myFix.lat, myFix.lng, myAlarm);
-      if (wifiConnected) {
-        udp.beginPacket(BROADCAST, PORT);
-        udp.write((uint8_t*)buf, n);
-        udp.endPacket();
-      }
-      esp_now_send(broadcastAddr, (uint8_t*)buf, n);
-    }
-  }
-  /*
-  // Send own position once per second (only with a valid fix)
+  // Heartbeat: ALWAYS broadcast once per second (no fix/alarm condition).
   if (millis() - lastTx >= TX_INTERVAL) {
     lastTx = millis();
     char buf[64];
     int n = snprintf(buf, sizeof(buf), "%d,%.6f,%.6f,%d",
                      DEVICE_ID, myFix.lat, myFix.lng, myAlarm);
     esp_now_send(broadcastAddr, (uint8_t*)buf, n);
+    if (WiFi.status() == WL_CONNECTED) {
+      udp.beginPacket(BROADCAST, PORT);
+      udp.write((const uint8_t*)buf, n);
+      udp.endPacket();
+    }
   }
-  */
+
   // Remove peers that haven't sent anything for too long (timeout)
   for (int i = 1; i <= NUM_PEERS; i++)
     if (peers[i].active && millis() - peers[i].lastSeen > PEER_TIMEOUT)
