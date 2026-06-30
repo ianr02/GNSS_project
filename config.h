@@ -21,7 +21,7 @@
 #define DRAW_INTERVAL  500
 
 // ---- Device Identity: Change per device (1, 2, 3) ----
-#define DEVICE_ID 1
+#define DEVICE_ID 2
 #define NUM_PEERS 3
 
 // ---- ESP-NOW ----
