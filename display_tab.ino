@@ -46,54 +46,60 @@ void displayWaiting() {
 }
 
 
-void displayPosition(const GpsFix &f) {
+// ============================================================
+//  Normal-Anzeige in DREI Teilen, damit nicht jedes Mal der
+//  ganze Schirm neu gemalt werden muss (das war zu langsam):
+//   1) drawNormalLayout() - EINMAL bei Moduswechsel (Rahmen+Titel)
+//   2) drawNormalText()   - selten (~2-3x/s), loescht NUR links
+//   3) drawCompass()      - oft (~20x/s), loescht NUR die Kompass-Box
+// ============================================================
+
+// 1) Grundlayout: Rahmen + statischer Titel. Nur bei Moduswechsel.
+void drawNormalLayout() {
   tft.fillScreen(COL_BG);
   drawBorder(COL_OK);
-
   tft.setTextColor(COL_OK);
   tft.setTextSize(2);
   tft.setCursor(8, 6);
   tft.print("DEVICE "); tft.print(DEVICE_ID);
+}
 
+// 2) Linker Textbereich. Loescht nur x=4..149 (Kompass bleibt unberuehrt).
+void drawNormalText(const GpsFix &f) {
+  tft.fillRect(4, 24, 145, 107, COL_BG);
   tft.setTextColor(COL_TEXT);
   tft.setTextSize(1);
-  tft.setCursor(8, 32);
-  tft.print("Lat: "); tft.print(f.lat, 6);
-  tft.setCursor(8, 44);
-  tft.print("Lon: "); tft.print(f.lng, 6);
-  tft.setCursor(8, 56);
-  tft.print(f.speedKmh, 1); tft.print(" km/h  Sats:"); tft.print(f.sats);
+  tft.setCursor(8, 32); tft.print("Lat: "); tft.print(f.lat, 6);
+  tft.setCursor(8, 44); tft.print("Lon: "); tft.print(f.lng, 6);
+  tft.setCursor(8, 56); tft.print(f.speedKmh, 1); tft.print(" km/h  Sats:"); tft.print(f.sats);
 
-  // Distance + bearing to the first active device
   int other = firstActivePeer();
   if (other > 0) {
     double d = haversine(f.lat, f.lng, peers[other].lat, peers[other].lng);
     double b = bearing (f.lat, f.lng, peers[other].lat, peers[other].lng);
     tft.setTextSize(2);
     tft.setTextColor(ST77XX_CYAN);
-    tft.setCursor(8, 80);
-    tft.print("-> D"); tft.print(other); tft.print(": ");
-    tft.print(d, 0); tft.print("m");
+    tft.setCursor(8, 78);  tft.print("-> D"); tft.print(other); tft.print(":");
+    tft.setCursor(8, 96);  tft.print(d, 0); tft.print("m");
     tft.setTextSize(1);
     tft.setTextColor(COL_TEXT);
-    tft.setCursor(8, 110);
-    tft.print("Bearing: "); tft.print(b, 0); tft.print(" deg");
+    tft.setCursor(8, 116); tft.print("Bearing: "); tft.print(b, 0);
   } else {
     tft.setTextColor(COL_WARN);
     tft.setTextSize(1);
     tft.setCursor(8, 90);
     tft.print("Waiting for other device...");
   }
-    // ---- Kompass / Nordpfeil (rechts auf dem Display) ----
-  float heading = getHeading();
-  int cx = 195, cy = 60, r = 38;          // Kreis-Mittelpunkt rechts
-  tft.drawCircle(cx, cy, r, COL_TEXT);    // Kompass-Ring
+}
 
-  // Der Pfeil zeigt nach NORDEN, relativ zur Blickrichtung:
-  // Pfeilwinkel = 0 (Nord) - Blickrichtung
-  drawArrow(cx, cy, r - 6, -heading, ST77XX_RED);
+// 3) Kompass rechts. Loescht nur seine eigene kleine Box -> kaum Flackern.
+void drawCompass(float heading) {
+  int cx = 190, cy = 68, r = 34;
+  tft.fillRect(150, 24, 86, 90, COL_BG);     // nur die Kompass-Box loeschen
+  tft.drawCircle(cx, cy, r, COL_TEXT);       // Ring
+  drawArrow(cx, cy, r - 6, -heading, ST77XX_RED);   // Pfeil = 0(Nord) - Blickrichtung
 
-  // "N" an die Stelle malen, wohin der Pfeil zeigt
+  // "N" dorthin malen, wohin der Pfeil zeigt
   float na = radians(-heading);
   tft.setTextColor(COL_TEXT);
   tft.setTextSize(1);
