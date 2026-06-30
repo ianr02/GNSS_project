@@ -15,7 +15,7 @@ unsigned long lastText    = 0;        // slow text area
 unsigned long lastCompass = 0;        // fast compass / arrow
 // DRAW_INTERVAL comes from config.h
 const unsigned long TEXT_INTERVAL    = 400;  // ms
-const unsigned long COMPASS_INTERVAL = 50;   // ms
+const unsigned long COMPASS_INTERVAL = 80;   // ms
 float currentHeading = 0;
 
 // ---- Display state machine ----
@@ -35,7 +35,7 @@ void setup() {
   Wire.begin(I2C_SDA, I2C_SCL);
   displayBegin();
   gpsBegin();
-   commsBegin();
+  commsBegin();
   compassBegin();
   displayWaiting();
   Serial.println("Started");
@@ -46,7 +46,7 @@ void loop() {
 
   // Switch closed (pin 10 reads HIGH) = this device raises the alarm
   myAlarm = (digitalRead(SWITCH_PIN) == HIGH) ? 1 : 0;
-  
+
   // --- TEMP DEBUG: prints once whenever the switch changes ---
   static int lastDbg = -1;
   if (myAlarm != lastDbg) { Serial.print("Switch -> myAlarm = "); Serial.println(myAlarm); lastDbg = myAlarm; }
@@ -94,8 +94,9 @@ void loop() {
       if (millis() - lastText >= TEXT_INTERVAL) { lastText = millis(); drawAlarmInfo(alarmPeer); }
       break;
 
-    case MODE_SENDING:
+       case MODE_SENDING:
       if (millis() - lastCompass >= COMPASS_INTERVAL) { lastCompass = millis(); drawAlarmBorder(); }
+      if (millis() - lastText    >= TEXT_INTERVAL)    { lastText    = millis(); drawSendingInfo(); }
       break;
   }
 }

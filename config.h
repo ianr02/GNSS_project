@@ -11,9 +11,9 @@
 
 // ---- Network Information ----
 #define PORT 5005
-#define BROADCAST "255.255.255.255"
-#define SSID ""
-#define PASSWORD ""
+#define BROADCAST "192.168.4.255"
+#define SSID "192.168.4.4"
+#define PASSWORD "12345678"
 
 // ---- Alarm Toggle Switch (pin 12 = power/HIGH, pin 10 = sense) ----
 #define SWITCH_PWR_PIN 12   // driven HIGH, acts as the switch's supply
@@ -21,7 +21,7 @@
 #define DRAW_INTERVAL  500
 
 // ---- Device Identity: Change per device (1, 2, 3) ----
-#define DEVICE_ID 2
+#define DEVICE_ID 1
 #define NUM_PEERS 3
 
 // ---- ESP-NOW ----
