@@ -1,4 +1,5 @@
 #include "config.h"
+#include <esp_wifi.h> 
 
 uint8_t broadcastAddr[6] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
 unsigned long lastTx = 0;
@@ -31,6 +32,14 @@ int firstActivePeer() {
   memcpy(buf, data, len);
   buf[len] = '\0';
 
+  // Closer to zero -> Better
+  // if -70 at 20 m -> Good 
+  // -90 -> bad
+  // RSSI -54 : 2,53.350120,-6.298400,0     <- von Gerät 2 (nah, starkes Signal)
+  // RSSI -71 : 3,53.349800,-6.301100,0     <- von Gerät 3 (weiter weg
+  //                                                        ,schwächer)
+  Serial.printf("RSSI %d : %s\n", info->rx_ctrl->rssi, buf);  
+
   int id, alarm;
   double lat, lng;
   if (sscanf(buf, "%d,%lf,%lf,%d", &id, &lat, &lng, &alarm) == 4) {
@@ -42,45 +51,13 @@ int firstActivePeer() {
       peers[id].lastSeen = millis();
     }
   }
-} 
+}
 
 void commsBegin() {
+  // Old commsBegin
   /*
-  // Connect to Wifi
   WiFi.mode(WIFI_STA);
-  WiFi.setSleep(false);              // keep radio awake so ESP-NOW is reliable
-
-  if (strlen(SSID) > 0) {            // only try if an SSID is configured
-    WiFi.begin(SSID, PASSWORD);
-    unsigned long t0 = millis();
-    while (WiFi.status() != WL_CONNECTED && millis() - t0 < 8000) {
-      delay(250);                    // give up after 8 s -> setup never freezes
-    }
-    if (WiFi.status() == WL_CONNECTED) {
-      Serial.print("WiFi connected, IP: ");
-      Serial.println(WiFi.localIP());
-      udp.begin(PORT);
-      wifiConnected = true;
-    } else {
-      Serial.println("WiFi NOT connected (continuing, no PC link)");
-    }
-  }
-
-
-  if (esp_now_init() != ESP_OK) { Serial.println("ESP-NOW init ERROR"); return; }
-  esp_now_register_recv_cb(onDataRecv);
-
-  esp_now_peer_info_t peerInfo = {};
-  memcpy(peerInfo.peer_addr, broadcastAddr, 6);
-  peerInfo.channel = 0;
-  peerInfo.encrypt = false;
-  if (esp_now_add_peer(&peerInfo) != ESP_OK) Serial.println("Broadcast Peer ERROR");
-  Serial.println("ESP-NOW ready");x
-  */
-
-  WiFi.mode(WIFI_STA);
-  WiFi.setSleep(false);          // keep radio awake (important!)
-  // --- WiFi connect block TEMPORARILY disabled for testing ---
+  WiFi.setSleep(false);     
 
   if (esp_now_init() != ESP_OK) { Serial.println("ESP-NOW init failed"); return; }
   esp_now_register_recv_cb(onDataRecv);
@@ -91,11 +68,32 @@ void commsBegin() {
   peerInfo.encrypt = false; 
   esp_now_add_peer(&peerInfo);
   Serial.println("ESP-NOW only");
+  */ 
 
+  // New one (01.07. 23:25)
+  WiFi.mode(WIFI_STA);
+  WiFi.disconnect();
+  WiFi.setSleep(false);
 
+  WiFi.setTxPower(WIFI_POWER_19_5dBm);                 // max transmit power
+  esp_wifi_set_protocol(WIFI_IF_STA,
+      WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G |
+      WIFI_PROTOCOL_11N | WIFI_PROTOCOL_LR);           // Long-Range mode
+  esp_wifi_set_channel(11, WIFI_SECOND_CHAN_NONE);      // all devices on ch 1
+
+  if (esp_now_init() != ESP_OK) { Serial.println("ESP-NOW init failed"); return; }
+  esp_now_register_recv_cb(onDataRecv);
+
+  esp_now_peer_info_t peerInfo = {};
+  memcpy(peerInfo.peer_addr, broadcastAddr, 6);
+  peerInfo.channel = 11;                               
+  peerInfo.encrypt = false;
+  esp_now_add_peer(&peerInfo);
+  Serial.println("ESP-NOW ready (LR, max power, ch1)");
 }
+
+
 void commsUpdate() {
-  // Heartbeat: ALWAYS broadcast once per second (no fix/alarm condition).
   if (millis() - lastTx >= TX_INTERVAL) {
     lastTx = millis();
     char buf[64];

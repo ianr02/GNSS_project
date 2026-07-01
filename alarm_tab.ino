@@ -45,24 +45,25 @@ void drawAlarmLayout(int who) {
   tft.print("To D"); tft.print(who);
 }
 
-// Big arrow on the LEFT half. Fast updates.
 void drawAlarmArrow(int who, float heading) {
-  double brg   = bearing(myFix.lat, myFix.lng, peers[who].lat, peers[who].lng);
-  float  angle = brg - heading;            // screen angle = target bearing - own heading
-
   int cx = 68, cy = 82, r = 42;
-  tft.fillRect(22, 38, 92, 90, COL_BG);    // clear only the (left) arrow area
-  drawArrow(cx, cy, r, angle, ST77XX_RED);
+  tft.fillRect(22, 38, 92, 90, COL_BG);      // clear the arrow area
+  if (!myFix.valid) {                        // no own position -> can't point
+    tft.setTextColor(COL_WARN); tft.setTextSize(2);
+    tft.setCursor(26, 74); tft.print("No GPS");
+    return;
+  }
+  double brg = bearing(myFix.lat, myFix.lng, peers[who].lat, peers[who].lng);
+  tft.drawCircle(cx, cy, r, COL_TEXT);       // <-- NEW: ring around the arrow
+  drawArrow(cx, cy, r - 6, brg - heading, ST77XX_RED);  // arrow now fits inside the ring
 }
 
-// Distance on the RIGHT half, below the "To Dx" label. Slow updates.
 void drawAlarmInfo(int who) {
+  tft.fillRect(126, 66, 110, 34, COL_BG);
+  if (!myFix.valid) return;
   double dist = haversine(myFix.lat, myFix.lng, peers[who].lat, peers[who].lng);
-  tft.fillRect(126, 66, 110, 34, COL_BG);  // clear only the distance field (right side)
-  tft.setTextColor(COL_TEXT);
-  tft.setTextSize(3);
-  tft.setCursor(128, 70);
-  tft.print(dist, 0); tft.print("m");
+  tft.setTextColor(COL_TEXT); tft.setTextSize(3);
+  tft.setCursor(128, 70); tft.print(dist, 0); tft.print("m");
 }
 
 // ---------- SENDER (this device is in danger) ----------

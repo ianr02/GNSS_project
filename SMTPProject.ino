@@ -1,5 +1,4 @@
 #include "config.h"
-#include <Wire.h>
 
 // ---- Global objects (defined here, declared 'extern' in config.h) ----
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
@@ -38,30 +37,29 @@ void setup() {
   commsBegin();
   compassBegin();
   displayWaiting();
-  Serial.println("Started");
+  Serial.println("Start");
 }
 
 void loop() {
   gpsUpdate();
 
-  // Switch closed (pin 10 reads HIGH) = this device raises the alarm
-  myAlarm = (digitalRead(SWITCH_PIN) == HIGH) ? 1 : 0;
-
-  // --- TEMP DEBUG: prints once whenever the switch changes ---
-  static int lastDbg = -1;
-  if (myAlarm != lastDbg) { Serial.print("Switch -> myAlarm = "); Serial.println(myAlarm); lastDbg = myAlarm; }
+  // --- Debounced alarm switch (stops sender-side flicker) ---
+  static int switchStable = 0, switchLastRaw = 0;
+  static unsigned long switchChangedAt = 0;
+  int switchRaw = (digitalRead(SWITCH_PIN) == HIGH) ? 1 : 0;
+  if (switchRaw != switchLastRaw) { switchLastRaw = switchRaw; switchChangedAt = millis(); }
+  if (millis() - switchChangedAt > 60) switchStable = switchRaw;   // must be stable 60 ms
+  myAlarm = switchStable;
 
   commsUpdate();
-
-  // Poll the gyro every loop -> smooth, accurate heading integral
   currentHeading = getHeading();
 
   // ---- Decide which screen to show ----
   int alarmPeer = findAlarmPeer();
-  if      (myAlarm == 1)                 currentMode = MODE_SENDING;  // WE raised it -> always show
-  else if (alarmPeer > 0 && myFix.valid) currentMode = MODE_ALARM;    // someone else in danger
-  else if (!myFix.valid)                 currentMode = MODE_WAIT;
-  else                                   currentMode = MODE_NORMAL;
+  if      (myAlarm == 1)   currentMode = MODE_SENDING;   // we raised it
+  else if (alarmPeer > 0)  currentMode = MODE_ALARM;     // someone else (show even without our own fix)
+  else if (!myFix.valid)   currentMode = MODE_WAIT;
+  else                     currentMode = MODE_NORMAL;
   // ---- On mode change: draw the static layout once ----
   if (currentMode != lastMode) {
     switch (currentMode) {

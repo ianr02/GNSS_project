@@ -64,32 +64,33 @@ void drawNormalLayout() {
   tft.print("DEVICE "); tft.print(DEVICE_ID);
 }
 
-// 2) Linker Textbereich. Loescht nur x=4..149 (Kompass bleibt unberuehrt).
 void drawNormalText(const GpsFix &f) {
-  tft.fillRect(4, 24, 145, 107, COL_BG);
-  tft.setTextColor(COL_TEXT);
-  tft.setTextSize(1);
-  tft.setCursor(8, 32); tft.print("Lat: "); tft.print(f.lat, 6);
-  tft.setCursor(8, 44); tft.print("Lon: "); tft.print(f.lng, 6);
-  tft.setCursor(8, 56); tft.print(f.speedKmh, 1); tft.print(" km/h  Sats:"); tft.print(f.sats);
+  tft.fillRect(4, 24, 145, 107, COL_BG);   // clear only the left text area
 
-  int other = firstActivePeer();
-  if (other > 0) {
-    double d = haversine(f.lat, f.lng, peers[other].lat, peers[other].lng);
-    double b = bearing (f.lat, f.lng, peers[other].lat, peers[other].lng);
+  // Connection status of the other devices (distance is shown only in alarm mode)
+  int y = 32;
+  for (int i = 1; i <= NUM_PEERS; i++) {
+    if (i == DEVICE_ID) continue;          // skip ourselves
     tft.setTextSize(2);
-    tft.setTextColor(ST77XX_CYAN);
-    tft.setCursor(8, 78);  tft.print("-> D"); tft.print(other); tft.print(":");
-    tft.setCursor(8, 96);  tft.print(d, 0); tft.print("m");
-    tft.setTextSize(1);
+    tft.setCursor(8, y);
     tft.setTextColor(COL_TEXT);
-    tft.setCursor(8, 116); tft.print("Bearing: "); tft.print(b, 0);
-  } else {
-    tft.setTextColor(COL_WARN);
-    tft.setTextSize(1);
-    tft.setCursor(8, 90);
-    tft.print("Waiting for other device...");
+    tft.print("D"); tft.print(i); tft.print(":");
+    if (peers[i].active) {
+      tft.setTextColor(COL_OK);            // green = connected
+      tft.print("online");
+    } else {
+      tft.setTextColor(ST77XX_RED);        // red = not connected
+      tft.print("off");
+    }
+    y += 24;
   }
+
+  // Own position (small)
+  tft.setTextSize(1);
+  tft.setTextColor(COL_TEXT);
+  tft.setCursor(8, y + 4);  tft.print(f.speedKmh / 3.6, 1); tft.print(" m/s Sat:"); tft.print(f.sats);
+  tft.setCursor(8, y + 16); tft.print("Lat "); tft.print(f.lat, 5);
+  tft.setCursor(8, y + 26); tft.print("Lon "); tft.print(f.lng, 5);
 }
 
 // 3) Kompass rechts. Loescht nur seine eigene kleine Box -> kaum Flackern.

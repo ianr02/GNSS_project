@@ -13,7 +13,7 @@
 #define PORT 5005
 #define BROADCAST "192.168.4.255"
 #define SSID "Campus Emergency"
-#define PASSWORD "A7654321"
+#define PASSWORD ""
 
 // ---- Alarm Toggle Switch (pin 12 = power/HIGH, pin 10 = sense) ----
 #define SWITCH_PWR_PIN 12   // driven HIGH, acts as the switch's supply
@@ -21,11 +21,11 @@
 #define DRAW_INTERVAL  500
 
 // ---- Device Identity: Change per device (1, 2, 3) ----
-#define DEVICE_ID 2
+#define DEVICE_ID 1
 #define NUM_PEERS 3
 
 // ---- ESP-NOW ----
-#define TX_INTERVAL   1000   // ms: Send once per second
+#define TX_INTERVAL   250   // ms: Send once per second
 #define PEER_TIMEOUT  5000   // ms: Device is considered offline after this time
 
 // ---- TFT ----
